@@ -18,7 +18,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=['peewee', 'pymysql']
+    install_requires=['peewee', 'pymysql'],
     setup_requires=['setuptools_scm'],
     use_scm_version=True
 )

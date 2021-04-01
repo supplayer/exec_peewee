@@ -4,8 +4,9 @@
 name: Upload Python Package
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*.*.*'
   
   workflow_dispatch:
 
@@ -30,4 +31,4 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.TWINE_TOKEN }}
       run: |
         python setup.py sdist bdist_wheel
-        python -m twine upload dist/*
+        twine upload dist/*

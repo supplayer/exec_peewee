@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/x254724521/exec_peewee.git",
-    packages=setuptools.find_packages(exclude=('tests', 'requirements.txt')),
+    packages=setuptools.find_packages(exclude=('tests', '.gitignore', 'requirements.txt')),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

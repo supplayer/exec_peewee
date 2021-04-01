@@ -1,64 +1,39 @@
-from time import time
-import threading
-import asyncio
-import functools
+class ExecPeewee:
 
+    @staticmethod
+    def ptable_fields(pw_table):
+        return pw_table()._meta.sorted_field_names
 
-def __loops(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        loop = asyncio.get_event_loop()
-        coro = func(*args, **kwargs)
-        loop.run_until_complete(coro)
-    return wrapper
+    @classmethod
+    def upsert(cls, pw_table, data: list, primary='id', batch_size=50):
+        metadata = cls.__fork_upsert(pw_table, data, primary, batch_size)
+        with pw_table()._meta.database.atomic():
+            q_insert = pw_table.insert_many(**metadata['insert']).execute() if metadata['insert']['rows'] else 0
+            q_update = pw_table.bulk_update(**metadata['update']) if metadata['update']['model_list'] else 0
+            return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
 
+    @classmethod
+    def __fork_upsert(cls, pw_table, data, primary, batch_size):
+        rows, model_list = [], []
+        dids = set(i[primary] for i in data if i.get(primary))
+        exist_ids = cls.__record_exists(pw_table, dids)
+        [model_list.append(i) if i.get(primary) in exist_ids else rows.append(i) for i in data]
+        cls.__data_check(rows)
+        cls.__data_check(model_list)
+        return {
+            'insert': {'rows': rows},
+            'update': {'model_list': [pw_table(**i) for i in model_list], 'batch_size': batch_size,
+                       'fields': list(model_list[0].keys()) if model_list else []}}
 
-class Bulk:
-    def __init__(self, pw_table, fields: list, exec_rate=10):
-        self.__table = pw_table
-        self.__fields = fields
-        self.exec_rate = exec_rate
-        self.data_store = {}
-        self.__lock = threading.Lock()
+    @classmethod
+    def __record_exists(cls, pw_table, ids: set):
+        return set(i.id for i in pw_table.select(pw_table.id).where(pw_table.id.in_(ids)))
 
-    def create(self, data: dict, action='create', batch_size=50):
-        store_name, query = f'{self.__table.__name__}_{action}', None
-        self.__check_store_table(store_name)
-        if len(self.data_store[store_name]['data']) >= batch_size:
-            query = self.__lock_data_store(store_name, action, batch_size)
-        self.__store_fields_append(data, self.__fields, store_name, action, batch_size)
-        return query
+    @classmethod
+    def __data_check(cls, data):
+        [cls.__check_result(i, data[0]) for i in data] if data else []
 
-    def __check_store_table(self, store_name):
-        if store_name not in self.data_store:
-            self.data_store[store_name] = {'data': [], 'timestamp': 0}
-
-    def __store_fields_append(self, data, fields, store_name, action, batch_size):
-        if self.__fields == fields:
-            self.data_store[store_name]['data'].append(self.__table(data))
-            self.data_store[store_name]['timestamp'] = time()
-        else:
-            self.__lock_data_store(store_name, action, batch_size)
-            raise Exception(f'Data fields not match data_store. Data: {data}')
-
-    def loop_data_execution(self):
-        while True:
-            print(self.data_store)
-            [self.__lock_data_store(k, k.split('_')[-1])
-             for k, v in self.data_store.items() if v['timestamp'] + self.exec_rate <= time()]
-
-    def __table_action(self, action):
-        return {'create': self.__table.bulk_create, 'update': self.__table.bulk_update}[action]
-
-    def __lock_data_store(self, store_name, action, batch_size=50):
-        query = None
-        self.__lock.acquire()
-        if action == 'create':
-            query = self.__table_action(action)(
-                self.data_store[store_name].pop('data'), batch_size=batch_size)
-        elif action == 'update':
-            query = self.__table_action(action)(
-                self.data_store[store_name].pop('data'), fields=self.__fields, batch_size=batch_size)
-        self.data_store[store_name]['data'] = []
-        self.__lock.release()
-        return query
+    @classmethod
+    def __check_result(cls, data: dict, simple: dict):
+        if data.keys() != simple.keys():
+            raise ValueError(f'keys not match: {data} VS {simple}')

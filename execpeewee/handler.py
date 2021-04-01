@@ -1,3 +1,7 @@
+from functools import reduce
+import operator
+
+
 class ExecPeewee:
 
     @staticmethod
@@ -11,6 +15,20 @@ class ExecPeewee:
             q_insert = pw_table.insert_many(**metadata['insert']).execute() if metadata['insert']['rows'] else 0
             q_update = pw_table.bulk_update(**metadata['update']) if metadata['update']['model_list'] else 0
             return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
+
+    @staticmethod
+    def select(pw_table, rule_fields: list):
+        """
+        :param pw_table: -> peeweetable
+        :param rule_fields: -> list e.g: [['create_time', '==', '2020-04-05 17:00:00'], ['source_id', '>', 12]]
+        :return: -> dict <generator>
+        """
+        clauses_rule, clauses_sel = [], []
+        for rule in rule_fields:
+            field, oper, value = rule[0], rule[1], f'"{rule[2]}"' if type(rule[2]) is str else rule[2]
+            rule = (eval(f'pw_table.{field}{oper}{value}'))
+            clauses_rule.append(rule)
+        return pw_table.select().where(reduce(operator.and_, clauses_rule))
 
     @classmethod
     def __fork_upsert(cls, pw_table, data, primary, batch_size):

@@ -22,7 +22,6 @@ class PeeweeModel:
         pymysql get single database table fields build peewee model.
         :param table: the table name of mysql database which one to build peewee model
         :param exc_fields: don't display item according mysql fields type e.g: ['datetime']
-        :return: str
         """
         sql, exc_fields, s = f'show columns from {table}', exc_fields or [], lambda num: ''.rjust(num, ' ')
         fields = '\n'+''.join([self.__fields_filter(i, exc_fields, s) for i in self.__connect(sql)])
@@ -38,7 +37,6 @@ class PeeweeModel:
         pymysql get all or single database table fields build peewee model.
         :param table: the table name which one to build peewee model
         :param exc_fields: don't display item according mysql fields type e.g: ['datetime']
-        :return: peewee model
         """
         tables, exc_fields = [table] if table else self.__tables(), exc_fields or []
         [self.get_model(table_, exc_fields=exc_fields) for table_ in tables]
@@ -50,10 +48,9 @@ class PeeweeModel:
         cursor.close()
         return query
 
-    def __tables(self):
+    def __tables(self) -> list:
         """
         pymysql get database table names.
-        :return: list
         """
         tables = self.peewee_db.get_tables()
         table_list = ['All Tables'] + tables

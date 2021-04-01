@@ -17,10 +17,10 @@ class PeeweeModel:
         """
         self.db.close()
 
-    def get_model(self, table, exc_fields: list = None):
+    def get_model(self, table: str, exc_fields: list = None):
         """
         pymysql get single database table fields build peewee model.
-        :param table: the table name which one to build peewee model
+        :param table: the table name of mysql database which one to build peewee model
         :param exc_fields: don't display item according mysql fields type e.g: ['datetime']
         :return: str
         """

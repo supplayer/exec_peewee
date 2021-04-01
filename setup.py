@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="exec-peewee",
     version="0.0.1",
-    author="RoyXing",
+    author="Supplayer",
     author_email="x254724521@hotmail.com",
     description="Build peewee model class from Mysql.",
     long_description=long_description,

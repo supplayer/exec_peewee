@@ -5,7 +5,6 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="exec-peewee",
-    version="0.0.2",
     author="Supplayer",
     author_email="x254724521@hotmail.com",
     description="Build peewee model class from Mysql.",
@@ -20,4 +19,6 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=['peewee', 'pymysql']
+    setup_requires=['setuptools_scm'],
+    use_scm_version=True
 )

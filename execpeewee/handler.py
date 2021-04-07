@@ -10,8 +10,8 @@ class ExecPeewee:
 
     @classmethod
     def batch_insert(cls, pw_table, data: iter, batch_size=100):
-        with pw_table()._meta.database.atomic():
-            return sum([pw_table.insert_many(i).execute() for i in cls.iter_data(data, batch_size)])
+        return sum([i['insert'] for i in [cls.upsert(pw_table, i, batch_size=batch_size, update=False)
+                                          for i in cls.iter_data(data, batch_size)]])
 
     @classmethod
     def batch_update(cls, pw_table, data: iter, batch_size=100, primary='id'):
@@ -27,13 +27,13 @@ class ExecPeewee:
         return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
 
     @classmethod
-    def upsert(cls, pw_table, data: list, primary='id', batch_size=100, insert=True):
+    def upsert(cls, pw_table, data: list, primary='id', batch_size=100, insert=True, update=True):
         metadata = cls.__fork_upsert(pw_table, data, primary, batch_size)
         with pw_table()._meta.database.atomic():
             q_insert = pw_table.insert_many(**metadata['insert']
                                             ).execute() if metadata['insert']['rows'] and insert else 0
             q_update = pw_table.bulk_update(**metadata['update']
-                                            ) if metadata['update']['model_list'] else 0
+                                            ) if metadata['update']['model_list'] and update else 0
             return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
 
     @staticmethod

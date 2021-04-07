@@ -9,11 +9,31 @@ class ExecPeewee:
         return pw_table()._meta.sorted_field_names
 
     @classmethod
-    def upsert(cls, pw_table, data: list, primary='id', batch_size=50):
+    def batch_insert(cls, pw_table, data: iter, batch_size=100):
+        return sum([i['insert'] for i in [cls.upsert(pw_table, i, batch_size=batch_size, update=False)
+                                          for i in cls.iter_data(data, batch_size)]])
+
+    @classmethod
+    def batch_update(cls, pw_table, data: iter, batch_size=100, primary='id'):
+        return sum([i['update'] for i in [cls.upsert(pw_table, i, primary, batch_size, insert=False)
+                                          for i in cls.iter_data(data, batch_size)]])
+
+    @classmethod
+    def batch_upsert(cls, pw_table, data: iter, batch_size=100, primary='id'):
+        q_insert, q_update = 0, 0
+        for i in [cls.upsert(pw_table, i, primary, batch_size) for i in cls.iter_data(data, batch_size)]:
+            q_insert += i['insert']
+            q_update += i['update']
+        return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
+
+    @classmethod
+    def upsert(cls, pw_table, data: list, primary='id', batch_size=100, insert=True, update=True):
         metadata = cls.__fork_upsert(pw_table, data, primary, batch_size)
         with pw_table()._meta.database.atomic():
-            q_insert = pw_table.insert_many(**metadata['insert']).execute() if metadata['insert']['rows'] else 0
-            q_update = pw_table.bulk_update(**metadata['update']) if metadata['update']['model_list'] else 0
+            q_insert = pw_table.insert_many(**metadata['insert']
+                                            ).execute() if metadata['insert']['rows'] and insert else 0
+            q_update = pw_table.bulk_update(**metadata['update']
+                                            ) if metadata['update']['model_list'] and update else 0
             return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
 
     @staticmethod
@@ -29,6 +49,23 @@ class ExecPeewee:
             rule = (eval(f'pw_table.{field}{oper}{value}'))
             clauses_rule.append(rule)
         return pw_table.select().where(reduce(operator.and_, clauses_rule))
+
+    @classmethod
+    def iter_data(cls, data, batch_size=100):
+        insert_data = []
+        for i in data:
+            if len(insert_data) >= batch_size:
+                current_data = insert_data[:]
+                insert_data.clear()
+                yield current_data
+            insert_data.append(i)
+        yield insert_data
+
+    @classmethod
+    def __clear_data(cls, insert_data: list):
+        current_data = insert_data[:]
+        insert_data.clear()
+        return current_data
 
     @classmethod
     def __fork_upsert(cls, pw_table, data, primary, batch_size):

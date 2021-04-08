@@ -5,8 +5,15 @@ import operator
 class ExecPeewee:
 
     @staticmethod
-    def ptable_fields(pw_table):
+    def field_names(pw_table):
         return pw_table()._meta.sorted_field_names
+
+    @classmethod
+    def fields(cls, pw_table, include: set = None, exclude: set = None):
+        """
+        peewee select fields with include or exclude.
+        """
+        return [pw_table()._meta.fields[f] for f in (include or (set(cls.field_names(pw_table)) - (exclude or set())))]
 
     @classmethod
     def batch_insert(cls, pw_table, data: iter, batch_size=100):
@@ -24,7 +31,7 @@ class ExecPeewee:
         for i in [cls.upsert(pw_table, i, primary, batch_size) for i in cls.iter_data(data, batch_size)]:
             q_insert += i['insert']
             q_update += i['update']
-        return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
+        return {'insert': q_insert, 'update': q_update, 'total': q_insert + q_update}
 
     @classmethod
     def upsert(cls, pw_table, data: list, primary='id', batch_size=100, insert=True, update=True):
@@ -34,7 +41,7 @@ class ExecPeewee:
                                             ).execute() if metadata['insert']['rows'] and insert else 0
             q_update = pw_table.bulk_update(**metadata['update']
                                             ) if metadata['update']['model_list'] and update else 0
-            return {'insert': q_insert, 'update': q_update, 'total': q_insert+q_update}
+            return {'insert': q_insert, 'update': q_update, 'total': q_insert + q_update}
 
     @staticmethod
     def select(pw_table, rule_fields: list):

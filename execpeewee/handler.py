@@ -1,4 +1,6 @@
 from functools import reduce
+from json import JSONEncoder, loads, dumps
+from datetime import datetime, date
 import operator
 
 
@@ -69,6 +71,10 @@ class ExecPeewee:
         yield insert_data
 
     @classmethod
+    def date_encoder(cls, data):
+        return loads(dumps(data, cls=DateEncoder))
+
+    @classmethod
     def __clear_data(cls, insert_data: list):
         current_data = insert_data[:]
         insert_data.clear()
@@ -99,3 +105,16 @@ class ExecPeewee:
     def __check_result(cls, data: dict, simple: dict):
         if data.keys() != simple.keys():
             raise ValueError(f'keys not match: {data} VS {simple}')
+
+
+class DateEncoder(JSONEncoder):
+    """
+    TypeError: Object of type 'datetime' is not JSON serializable
+    """
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(obj, date):
+            return obj.strftime("%Y-%m-%d")
+        else:
+            return JSONEncoder.default(self, obj)

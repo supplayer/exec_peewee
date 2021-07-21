@@ -83,7 +83,7 @@ class ExecPeewee:
     @classmethod
     def __fork_upsert(cls, pw_table, data, primary, batch_size):
         rows, model_list = [], []
-        dids = set(i[primary] for i in data if i.get(primary))
+        dids = set(i[primary] for i in data if i.get(primary) or i.get(primary) == 0)
         exist_ids = cls.__record_exists(pw_table, dids)
         [model_list.append(i) if i.get(primary) in exist_ids else rows.append(i) for i in data]
         cls.__data_check(rows)

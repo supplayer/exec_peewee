@@ -1,5 +1,6 @@
 from json import JSONEncoder, loads, dumps
 from datetime import datetime, date
+from peewee import SelectBase
 from math import ceil
 
 
@@ -45,7 +46,7 @@ class ExecPeewee:
             return {'insert': q_insert, 'update': q_update, 'total': q_insert + q_update}
 
     @staticmethod
-    def select(pw_table, s_fields: list = None, r_fields: list = None):
+    def select(pw_table, s_fields: list = None, r_fields: list = None) -> SelectBase:
         s_fields, r_fields = s_fields or [], r_fields or []
         if r_fields:
             return pw_table.select(*s_fields).where(*r_fields)

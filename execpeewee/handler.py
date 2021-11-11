@@ -1,7 +1,6 @@
-from functools import reduce
 from json import JSONEncoder, loads, dumps
 from datetime import datetime, date
-import operator
+from math import ceil
 
 
 class ExecPeewee:
@@ -46,18 +45,20 @@ class ExecPeewee:
             return {'insert': q_insert, 'update': q_update, 'total': q_insert + q_update}
 
     @staticmethod
-    def select(pw_table, rule_fields: list):
-        """
-        :param pw_table: -> peeweetable
-        :param rule_fields: -> list e.g: [['create_time', '==', '2020-04-05 17:00:00'], ['source_id', '>', 12]]
-        :return: -> dict <generator>
-        """
-        clauses_rule, clauses_sel = [], []
-        for rule in rule_fields:
-            field, oper, value = rule[0], rule[1], f'"{rule[2]}"' if type(rule[2]) is str else rule[2]
-            rule = (eval(f'pw_table.{field}{oper}{value}'))
-            clauses_rule.append(rule)
-        return pw_table.select().where(reduce(operator.and_, clauses_rule))
+    def select(pw_table, s_fields: list = None, r_fields: list = None):
+        s_fields, r_fields = s_fields or [], r_fields or []
+        if r_fields:
+            return pw_table.select(*s_fields).where(*r_fields)
+        else:
+            return pw_table.select(*s_fields)
+
+    @classmethod
+    def select_by_page(cls, pw_table, s_fields: list = None, r_fields: list = None, page_num=None, num_per_page=100):
+        s_query = cls.select(pw_table, s_fields, r_fields)
+        item_num = s_query.count()
+        page_num = [page_num] if page_num else range(1, ceil(item_num / num_per_page) + 1)
+        for p_num in page_num:
+            yield [i for i in s_query.paginate(p_num, num_per_page).dicts()]
 
     @classmethod
     def iter_data(cls, data, batch_size=100):

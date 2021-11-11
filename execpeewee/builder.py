@@ -17,7 +17,7 @@ class PeeweeModel:
         """
         self.db.close()
 
-    def get_model(self, table: str, exc_fields: list = None):
+    def build_model(self, table: str, exc_fields: list = None):
         """
         pymysql get single database table fields build peewee model.
         :param table: the table name of mysql database which one to build peewee model
@@ -27,19 +27,19 @@ class PeeweeModel:
         fields = '\n'+''.join([self.__fields_filter(i, exc_fields, s) for i in self.__connect(sql)])
         class_name = ''.join([i.capitalize() for i in table.split('_')])
         subclass = f'{s(4)}class Meta:\n' \
-                   f'{s(8)}database = \n' \
+                   f'{s(8)}database = {self.peewee_db.database}\n' \
                    f"{s(8)}table_name = '{table}'\n" \
-                   f'{s(8)}# primary_key = CompositeKey("fields_1", "fields_2")\n'
+                   # f'{s(8)}# primary_key = CompositeKey("fields_1", "fields_2")\n'
         print(f'\nclass {class_name}(Model): {fields}\n{subclass}')
 
-    def get_models(self, table=None, exc_fields: list = None):
+    def build_models(self, table=None, exc_fields: list = None):
         """
         pymysql get all or single database table fields build peewee model.
         :param table: the table name which one to build peewee model
         :param exc_fields: don't display item according mysql fields type e.g: ['datetime']
         """
         tables, exc_fields = [table] if table else self.__tables(), exc_fields or []
-        [self.get_model(table_, exc_fields=exc_fields) for table_ in tables]
+        [self.build_model(table_, exc_fields=exc_fields) for table_ in tables]
 
     def __connect(self, sql):
         cursor = self.db.cursor()

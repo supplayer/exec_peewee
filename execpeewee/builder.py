@@ -10,6 +10,8 @@ class PeeweeModel:
         """
         self.peewee_db = peewee_db
         self.db = pymysql.connect(database=peewee_db.database, **peewee_db.connect_params)
+        self.fields = PeeweeFields.get()
+        self.unknown = PeeweeFields.UnknownField.__name__
 
     def __del__(self):
         """
@@ -58,11 +60,10 @@ class PeeweeModel:
         choose = input('enter index num which table name choosed (split with ","):').replace(' ', '').split(',')
         return tables if '0' in choose else [table_list[int(i)] for i in choose]
 
-    @classmethod
-    def __fields_filter(cls, columns_info, exc_fields, s):
+    def __fields_filter(self, columns_info, exc_fields, s):
         fields_type = re.sub(r'\(.*$', '', columns_info[1])
-        return (f'{s(4)}{columns_info[0]} = {PeeweeFields.pw_fields[fields_type]}  # {columns_info[1]}\n'
-                if cls.__check_exc(columns_info, exc_fields) else '')
+        return (f'{s(4)}{columns_info[0]} = {self.fields.get(fields_type, self.unknown)}()  # {columns_info[1]}\n'
+                if self.__check_exc(columns_info, exc_fields) else '')
 
     @classmethod
     def __check_exc(cls, columns_info, exc_fields):

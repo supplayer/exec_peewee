@@ -18,6 +18,10 @@ class ExecPeewee:
         return [pw_table()._meta.fields[f] for f in (include or (set(cls.field_names(pw_table)) - (exclude or set())))]
 
     @classmethod
+    def fields_build(cls, pw_table):
+        return pw_table()._meta.fields
+
+    @classmethod
     def batch_insert(cls, pw_table, data: iter, batch_size=100):
         return sum([i['insert'] for i in [cls.upsert(pw_table, i, batch_size=batch_size, update=False)
                                           for i in cls.iter_data(data, batch_size)]])

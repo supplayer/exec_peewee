@@ -58,7 +58,7 @@ class PeeweeModel:
         """
         tables = self.peewee_db.get_tables()
         table_list = ['All Tables'] + tables
-        [print(f'{k} → {v}') for k, v in enumerate(table_list)]
+        [print(f'{k} -> {v}') for k, v in enumerate(table_list)]
         choose = input('enter index num which table name choosed (split with ","):').replace(' ', '').split(',')
         return tables if '0' in choose else [table_list[int(i)] for i in choose]
 

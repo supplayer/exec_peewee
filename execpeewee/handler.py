@@ -81,6 +81,10 @@ class ExecPeewee:
         return loads(dumps(data, cls=DateEncoder))
 
     @classmethod
+    def table_database(cls, pw_table):
+        return PwDatabase(pw_table._meta.database)
+
+    @classmethod
     def __clear_data(cls, insert_data: list):
         current_data = insert_data[:]
         insert_data.clear()
@@ -124,3 +128,11 @@ class DateEncoder(JSONEncoder):
             return obj.strftime("%Y-%m-%d")
         else:
             return JSONEncoder.default(self, obj)
+
+
+class PwDatabase:
+    def __init__(self, database):
+        self.database = database
+
+    def atomic(self):
+        return self.database.atomic()

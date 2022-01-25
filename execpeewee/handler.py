@@ -50,16 +50,21 @@ class ExecPeewee:
             return {'insert': q_insert, 'update': q_update, 'total': q_insert + q_update}
 
     @staticmethod
-    def select(pw_table, s_fields: list = None, r_fields: list = None) -> SelectBase:
-        s_fields, r_fields = s_fields or [], r_fields or []
-        if r_fields:
-            return pw_table.select(*s_fields).where(*r_fields)
+    def select_data(pw_table, s_fields: list = None, rules: list = None) -> SelectBase:
+        s_fields, rules = s_fields or [], rules or []
+        if rules:
+            return pw_table.select(*s_fields).where(*rules)
         else:
             return pw_table.select(*s_fields)
 
     @classmethod
-    def select_by_page(cls, pw_table, s_fields: list = None, r_fields: list = None, page_num=None, num_per_page=100):
-        s_query = cls.select(pw_table, s_fields, r_fields)
+    def pwtable_data(cls, pw_table, rules: list = None, include: set = None, exclude: set = None):
+        s_fields = cls.fields(pw_table, include=include, exclude=exclude)
+        return cls.select_data(pw_table, s_fields, rules)
+
+    @classmethod
+    def select_by_page(cls, pw_table, s_fields: list = None, rules: list = None, page_num=None, num_per_page=100):
+        s_query = cls.select_data(pw_table, s_fields, rules)
         item_num = s_query.count()
         page_num = [page_num] if page_num else range(1, ceil(item_num / num_per_page) + 1)
         for p_num in page_num:

@@ -50,21 +50,21 @@ class ExecPeewee:
             return {'insert': q_insert, 'update': q_update, 'total': q_insert + q_update}
 
     @staticmethod
-    def select_data(pw_table, s_fields: list = None, rules: list = None) -> SelectBase:
-        s_fields, rules = s_fields or [], rules or []
+    def select_data(pw_table, rules: list = None, select_model_fields: list = None) -> SelectBase:
+        select_model_fields, rules = select_model_fields or [], rules or []
         if rules:
-            return pw_table.select(*s_fields).where(*rules)
+            return pw_table.select(*select_model_fields).where(*rules)
         else:
-            return pw_table.select(*s_fields)
+            return pw_table.select(*select_model_fields)
 
     @classmethod
     def pwtable_data(cls, pw_table, rules: list = None, include: set = None, exclude: set = None):
-        s_fields = cls.fields(pw_table, include=include, exclude=exclude)
-        return cls.select_data(pw_table, s_fields, rules)
+        select_model_fields = cls.fields(pw_table, include=include, exclude=exclude)
+        return cls.select_data(pw_table, rules, select_model_fields)
 
     @classmethod
-    def select_by_page(cls, pw_table, s_fields: list = None, rules: list = None, page_num=None, num_per_page=100):
-        s_query = cls.select_data(pw_table, s_fields, rules)
+    def select_by_page(cls, pw_table, rules: list = None, select_model_fields: list = None, page_num=None, num_per_page=100):  # noqa
+        s_query = cls.select_data(pw_table, rules, select_model_fields)
         item_num = s_query.count()
         page_num = [page_num] if page_num else range(1, ceil(item_num / num_per_page) + 1)
         for p_num in page_num:

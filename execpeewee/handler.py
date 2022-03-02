@@ -13,6 +13,13 @@ class ExecPeewee:
         return pw_table()._meta.sorted_field_names
 
     @classmethod
+    def field(cls, pw_table, field_name) -> peewee.Field:
+        """
+        peewee model field.
+        """
+        return cls.fields_build(pw_table)[field_name]
+
+    @classmethod
     def fields(cls, pw_table, include: set = None, exclude: set = None):
         """
         peewee select fields with include or exclude.
@@ -22,10 +29,6 @@ class ExecPeewee:
     @classmethod
     def fields_build(cls, pw_table):
         return pw_table()._meta.fields
-
-    @classmethod
-    def model_field(cls, pw_table, field_name) -> peewee.Field:
-        return cls.fields_build(pw_table)[field_name]
 
     @classmethod
     def batch_insert(cls, pw_table, data: iter, batch_size=100):

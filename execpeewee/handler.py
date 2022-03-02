@@ -1,5 +1,7 @@
 from json import JSONEncoder, loads, dumps
 from datetime import datetime, date
+
+import peewee
 from peewee import SelectBase
 from math import ceil
 
@@ -22,7 +24,7 @@ class ExecPeewee:
         return pw_table()._meta.fields
 
     @classmethod
-    def model_field(cls, pw_table, field_name):
+    def model_field(cls, pw_table, field_name) -> peewee.Field:
         return cls.fields_build(pw_table)[field_name]
 
     @classmethod
